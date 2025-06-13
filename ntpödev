@@ -61,7 +61,7 @@ namespace ntpödev
         public string SeferSaati { get; set; }
         public Otobus Otobus { get; set; }
 
-        public decimal Ucret { get; set; } 
+        public double Ucret { get; set; } 
 
         public Sefer(string seferNo, DateTime seferTarihi, string seferSaati, Otobus otobus)
         {
