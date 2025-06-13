@@ -198,9 +198,9 @@ namespace ntpödev
 
             RezervasyonSistemi sistem = new RezervasyonSistemi();
 
-            Otobus otobus1 = new Otobus("34 ABC 123", 30);
-            Otobus otobus2 = new Otobus("06 DEF 456", 20);
-            Otobus otobus3 = new Otobus("23 ELZ 789", 40);
+            Otobus otobus1 = new Otobus("34 IST 340", 30);
+            Otobus otobus2 = new Otobus("06 ANK 006", 20);
+            Otobus otobus3 = new Otobus("23 ELZ 023", 40);
 
             SehirlerarasiSefer sefer1 = new SehirlerarasiSefer("S001", new DateTime(2025, 7, 10), "10:00", otobus1, "İstanbul", "Ankara");
             sefer1.Ucret = 350;
