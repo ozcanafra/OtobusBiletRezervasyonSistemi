@@ -1,0 +1,272 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+
+namespace ntpödev
+{
+    public interface IRezervasyon
+    {
+        bool BiletKes(Sefer sefer, int koltukNo);
+    }
+
+    public class Koltuk
+    {
+        public int KoltukNo { get; set; }
+        public bool DoluMu { get; set; }
+
+        public Koltuk(int koltukNo)
+        {
+            KoltukNo = koltukNo;
+            DoluMu = false;
+        }
+    }
+
+    public class Otobus
+    {
+        public string Plaka { get; set; }
+        public int Kapasite { get; set; }
+        public Koltuk[] Koltuklar { get; set; }
+
+        public Otobus(string plaka, int kapasite)
+        {
+            Plaka = plaka;
+            Kapasite = kapasite;
+            Koltuklar = new Koltuk[kapasite];
+            for (int i = 0; i < kapasite; i++)
+            {
+                Koltuklar[i] = new Koltuk(i + 1);
+            }
+        }
+
+        public void KoltuklariListele()
+        {
+            Console.WriteLine($"Otobüs Plaka: {Plaka}, Kapasite: {Kapasite}");
+            Console.WriteLine("-----------------------------------");
+            for (int i = 0; i < Koltuklar.Length; i++)
+            {
+                Console.Write($"[{Koltuklar[i].KoltukNo:D2}{(Koltuklar[i].DoluMu ? "X" : " ")}] ");
+                if ((i + 1) % 5 == 0)
+                {
+                    Console.WriteLine();
+                }
+            }
+            Console.WriteLine("\n-----------------------------------");
+        }
+    }
+
+    public abstract class Sefer
+    {
+        public string SeferNo { get; set; }
+        public DateTime SeferTarihi { get; set; }
+        public string SeferSaati { get; set; }
+        public Otobus Otobus { get; set; }
+
+        public double Ucret { get; set; } 
+
+        public Sefer(string seferNo, DateTime seferTarihi, string seferSaati, Otobus otobus)
+        {
+            SeferNo = seferNo;
+            SeferTarihi = seferTarihi;
+            SeferSaati = seferSaati;
+            Otobus = otobus;
+        }
+
+        public abstract void SeferBilgileriniGoster();
+    }
+
+    public class SehirlerarasiSefer : Sefer
+    {
+        public string KalkisSehri { get; set; }
+        public string VarisSehri { get; set; }
+
+        public SehirlerarasiSefer(string seferNo, DateTime seferTarihi, string seferSaati, Otobus otobus, string kalkisSehri, string varisSehri)
+          : base(seferNo, seferTarihi, seferSaati, otobus)
+        {
+            KalkisSehri = kalkisSehri;
+            VarisSehri = varisSehri;
+        }
+
+        public override void SeferBilgileriniGoster()
+        {
+            Console.WriteLine($"Sefer No: {SeferNo}, Tarih: {SeferTarihi.ToShortDateString()}, Saat: {SeferSaati}");
+            Console.WriteLine($"Kalkış: {KalkisSehri}, Varış: {VarisSehri}");
+            Console.WriteLine($"Otobüs Plaka: {Otobus.Plaka}");
+        }
+    }
+
+    public class SehiriciSefer : Sefer
+    {
+        public string GuzergahAdi { get; set; }
+
+        public SehiriciSefer(string seferNo, DateTime seferTarihi, string seferSaati, Otobus otobus, string guzergahAdi)
+          : base(seferNo, seferTarihi, seferSaati, otobus)
+        {
+            GuzergahAdi = guzergahAdi;
+        }
+
+        public override void SeferBilgileriniGoster()
+        {
+            Console.WriteLine($"Sefer No: {SeferNo}, Tarih: {SeferTarihi.ToShortDateString()}, Saat: {SeferSaati}");
+            Console.WriteLine($"Güzergah Adı: {GuzergahAdi}");
+            Console.WriteLine($"Otobüs Plaka: {Otobus.Plaka}");
+        }
+    }
+
+    public class RezervasyonSistemi : IRezervasyon
+    {
+        public List<Sefer> Seferler { get; set; }
+
+        public RezervasyonSistemi()
+        {
+            Seferler = new List<Sefer>();
+        }
+
+        public void SeferEkle(Sefer sefer)
+        {
+            Seferler.Add(sefer);
+            Console.WriteLine($"Sefer '{sefer.SeferNo}' başarıyla eklendi.");
+        }
+
+        public bool BiletKes(Sefer sefer, int koltukNo)
+        {
+            Console.Write("Yolcunun Adı Soyadı: ");
+            string adSoyad = Console.ReadLine();
+            Console.Write("Yolcunun T.C. Kimlik No: ");
+            string tc = Console.ReadLine();
+            return BiletKes(sefer, koltukNo, adSoyad, tc);
+        }
+
+        public bool BiletKes(Sefer sefer, int koltukNo, string adSoyad, string tc)
+        {
+            if (sefer == null || koltukNo < 1 || koltukNo > sefer.Otobus.Kapasite)
+            {
+                Console.WriteLine("Hatalı sefer ya da koltuk numarası.");
+                return false;
+            }
+
+            if (sefer.Otobus.Koltuklar[koltukNo - 1].DoluMu)
+            {
+                Console.WriteLine($"Hata: {koltukNo} numaralı koltuk dolu.");
+                return false;
+            }
+
+            sefer.Otobus.Koltuklar[koltukNo - 1].DoluMu = true;
+            Console.WriteLine($"Bilet başarıyla kesildi! Sefer: {sefer.SeferNo}, Koltuk No: {koltukNo}");
+            BiletYazdir(sefer, koltukNo, adSoyad, tc);
+            return true;
+        }
+
+        private void BiletYazdir(Sefer sefer, int koltukNo, string adSoyad, string tc)
+        {
+            Console.WriteLine("\n--- BİLET DETAYLARI ---");
+            sefer.SeferBilgileriniGoster();
+            Console.WriteLine($"Koltuk No     : {koltukNo}");
+            Console.WriteLine($"Yolcu Adı     : {adSoyad}");
+            Console.WriteLine($"T.C. Kimlik No: {tc}");
+            Console.WriteLine($"Ücret         : {sefer.Ucret} ₺");
+            Console.WriteLine("-----------------------\n");
+        }
+
+        public void TumSeferleriListele()
+        {
+            if (Seferler.Count == 0)
+            {
+                Console.WriteLine("Henüz tanımlanmış sefer bulunmamaktadır.");
+                return;
+            }
+            Console.WriteLine("\n--- Mevcut Seferler ---");
+            foreach (var sefer in Seferler)
+            {
+                sefer.SeferBilgileriniGoster();
+                Console.WriteLine($"Ücret: {sefer.Ucret} ₺");
+                Console.WriteLine("-----------------------");
+            }
+        }
+    }
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            try
+            {
+                Console.OutputEncoding = System.Text.Encoding.UTF8;
+            }
+            catch (IOException)
+            {
+            }
+
+            RezervasyonSistemi sistem = new RezervasyonSistemi();
+
+            Otobus otobus1 = new Otobus("34 ABC 123", 30);
+            Otobus otobus2 = new Otobus("06 DEF 456", 20);
+            Otobus otobus3 = new Otobus("23 ELZ 789", 40);
+
+            SehirlerarasiSefer sefer1 = new SehirlerarasiSefer("S001", new DateTime(2025, 7, 10), "10:00", otobus1, "İstanbul", "Ankara");
+            sefer1.Ucret = 350;
+            SehirlerarasiSefer sefer2 = new SehirlerarasiSefer("S002", new DateTime(2025, 7, 10), "14:30", otobus2, "Ankara", "İzmir");
+            sefer2.Ucret = 300;
+            SehirlerarasiSefer sefer3 = new SehirlerarasiSefer("S003", new DateTime(2025, 7, 10), "18:00", otobus3, "Elazığ", "Mersin");
+            sefer3.Ucret = 450;
+
+            sistem.SeferEkle(sefer1);
+            sistem.SeferEkle(sefer2);
+            sistem.SeferEkle(sefer3);
+
+            while (true)
+            {
+                Console.WriteLine("\n--- Otobüs Bilet Rezervasyon Sistemi ---");
+                Console.WriteLine("1. Seferleri Görüntüle");
+                Console.WriteLine("2. Bilet Rezervasyonu Yap");
+                Console.WriteLine("3. Çıkış");
+                Console.Write("Seçiminiz: ");
+
+                string secim = Console.ReadLine();
+
+                switch (secim)
+                {
+                    case "1":
+                        sistem.TumSeferleriListele();
+                        break;
+                    case "2":
+                        Console.Write("Rezervasyon yapmak istediğiniz seferin numarasını girin (örn: S001): ");
+                        string hedefSeferNo = Console.ReadLine();
+
+                        Sefer secilenSefer = sistem.Seferler.Find(s => s.SeferNo == hedefSeferNo);
+
+                        if (secilenSefer != null)
+                        {
+                            Console.WriteLine($"\n'{secilenSefer.SeferNo}' Seferi için Koltuk Durumu:");
+                            secilenSefer.Otobus.KoltuklariListele();
+
+                            Console.Write("Rezervasyon yapmak istediğiniz koltuk numarasını girin: ");
+                            if (int.TryParse(Console.ReadLine(), out int koltukNo))
+                            {
+                                Console.Write("Yolcunun Adı Soyadı: ");
+                                string adSoyad = Console.ReadLine();
+                                Console.Write("Yolcunun T.C. Kimlik No: ");
+                                string tc = Console.ReadLine();
+
+                                sistem.BiletKes(secilenSefer, koltukNo, adSoyad, tc);
+                            }
+                            else
+                            {
+                                Console.WriteLine("Hatalı koltuk numarası girişi. Lütfen bir sayı girin.");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Belirtilen sefer bulunamadı.");
+                        }
+                        break;
+                    case "3":
+                        Console.WriteLine("Sistemden çıkılıyor...");
+                        return;
+                    default:
+                        Console.WriteLine("Geçersiz seçim. Lütfen 1, 2 veya 3 girin.");
+                        break;
+                }
+            }
+        }
+    }
+}
